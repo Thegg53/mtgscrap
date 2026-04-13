@@ -510,14 +510,6 @@ class Deck:
         return sorted({c.set for c in self.cards if not c.is_basic_land})
 
     @property
-    def races(self) -> Counter:
-        return Counter(itertools.chain(*[c.races for c in self.cards]))
-
-    @property
-    def classes(self) -> Counter:
-        return Counter(itertools.chain(*[c.classes for c in self.cards]))
-
-    @property
     def is_bo3(self) -> bool:
         return self.has_sideboard and len(self.sideboard) > 7
 

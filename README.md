@@ -98,7 +98,6 @@ make clean          # Remove venv and cache files
 
 ## Notes
 
-- First run downloads Scryfall creature type data (~23MB) — this happens once
 - Scraping is throttled (0.6-0.8s delays between requests per MTGGoldfish)
 - Chrome runs **headless** (no windows visible) — check logs for status
 - Sideboard data only includes cards used in 30%+ of meta decks

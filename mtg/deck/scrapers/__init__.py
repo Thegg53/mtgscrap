@@ -21,7 +21,6 @@ from selenium.common.exceptions import ElementClickInterceptedException, Timeout
 from mtg import Json
 from mtg.deck import CardNotFound, Deck, DeckParser, InvalidDeck
 from mtg.deck.arena import ArenaParser
-from mtg.gstate import UrlsStateManager
 from mtg.utils import ParsingError, register_type, timed
 from mtg.utils.scrape import InaccessiblePage, ScrapingError, Soft404Error, fetch_soup, find_links, \
     prepend_url
@@ -342,7 +341,6 @@ class ContainerScraper(DeckScraper):
 
     def __init__(self, url: str, metadata: Json | None = None) -> None:
         super().__init__(url, metadata)
-        self._urls_manager = UrlsStateManager()
 
     @override
     def _post_init(self) -> None:

@@ -36,7 +36,6 @@ from tqdm import tqdm
 from unidecode import unidecode
 
 from mtg import DATA_DIR, Json
-from mtg.mtgwiki import CLASSES, RACES
 from mtg.utils import from_iterable, getfloat, getint, getrepr, timed
 from mtg.utils.files import download_file, getdir
 from mtg.utils.scrape import throttle
@@ -262,14 +261,6 @@ class TypeLine:
     def is_sorcery(self) -> bool:
         return "Sorcery" in self.regular_types
 
-    @property
-    def races(self) -> list[str]:
-        return [t for t in self.subtypes if t in RACES]
-
-    @property
-    def classes(self) -> list[str]:
-        return [t for t in self.subtypes if t in CLASSES]
-
     def __init__(self, text: str) -> None:
         if MULTIFACE_SEPARATOR in text:
             raise ValueError("Multiface type line")
@@ -389,14 +380,6 @@ class CardFace:
     @property
     def subtypes(self) -> list[str]:
         return self.parse_types().subtypes if self.parse_types() else []
-
-    @property
-    def races(self) -> list[str]:
-        return self.parse_types().races if self.parse_types() else []
-
-    @property
-    def classes(self) -> list[str]:
-        return self.parse_types().classes if self.parse_types() else []
 
     @cached_property
     def lord_sentences(self) -> list[LordSentence]:
@@ -870,18 +853,6 @@ class Card:
     @property
     def is_saga(self) -> bool:
         return "Saga" in self.subtypes
-
-    @property
-    def races(self) -> list[str]:
-        if self.is_multifaced:
-            return sorted({t for face in self.card_faces for t in face.races})
-        return self.parse_types().races
-
-    @property
-    def classes(self) -> list[str]:
-        if self.is_multifaced:
-            return sorted({t for face in self.card_faces for t in face.classes})
-        return self.parse_types().classes
 
     @property
     def is_permanent(self) -> bool:
