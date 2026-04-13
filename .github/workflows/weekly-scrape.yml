@@ -33,11 +33,15 @@ jobs:
         run: |
           python scripts/analyze_hate_cards.py
       
+      - name: Generate PDF report
+        run: |
+          python scripts/generate_pdf_report.py
+      
       - name: Commit and push outputs
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git checkout -B reports origin/reports 2>/dev/null || git checkout -b reports
-          git add output/decks/ output/reports/
+          git add output/decks/ output/reports/ output/paper/
           git commit -m "chore: weekly MTG scrape ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit"
           git push -u origin reports
