@@ -9,7 +9,56 @@ mindbreak trap
 consign to memory
 stifle
 damping sphere
+flusterstorm
+
+# spells
+thalia, guardian of thraben
+deafening silence
+sphere of resistance
 
 # graveyard
 leyline of the void
 rest in peace
+faerie macabre
+dauthi voidwalker
+graffdigger's cage
+surgical extraction
+bojuka bog
+endurance
+
+# card draw
+orcish bowmasters
+
+# protection
+leyline of sanctity
+the one ring
+
+# discard
+thoughtseize
+cabal therapy
+
+# artifacts
+meltdown
+collector ouphe
+stony silence
+clarion conqueror
+null rod
+abrade
+force of vigor
+karn, the great creator
+soul-guide lantern
+wrath of the skies
+
+# misc
+disruptor flute
+pithing needle
+wasteland
+boseiju, who endures
+ghost quarter
+chalice of the void
+warping wail
+hydroblast
+blue elemental blast
+pyroblast
+red elemental blast
+lavinia, azorious renegade
