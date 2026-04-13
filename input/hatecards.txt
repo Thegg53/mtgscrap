@@ -12,12 +12,14 @@ wrath of the skies
 
 # card draw
 orcish bowmasters
+Narset, parter of veils
 
 # counters
 daze
 force of negation
 force of will
 pact of negation
+Spell pierce
 
 # discard
 cabal therapy
@@ -46,12 +48,19 @@ pyroblast
 red elemental blast
 wasteland
 warping wail
+Teferi, time raveler
 
 # protection
 leyline of sanctity
 the one ring
+Veil of summer
 
 # spells
 deafening silence
 sphere of resistance
 thalia, guardian of thraben
+
+# storm
+Flusterstorm
+Mindbreak trap
+Consign to memory
