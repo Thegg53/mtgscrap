@@ -6,6 +6,8 @@
     @author: mazz3rr
 
 """
+import csv
+import json
 import logging
 from pathlib import Path
 from typing import Literal
@@ -268,6 +270,29 @@ class Exporter:
         _log.info(f"Exporting deck to: '{dst}'...")
         dst.write_text(self._build_xmage(), encoding="utf-8")
 
+    def to_csv_row(self) -> dict:
+        """Convert deck to a dictionary row suitable for CSV export.
+
+        Returns:
+            dict with columns: date, deck_name, format, archetype, author, url, maindeck_cards
+        """
+        metadata = self._deck.metadata
+        date = metadata.get("date")
+        if date:
+            date = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+        
+        url = metadata.get("url") or metadata.get("video_url") or ""
+        
+        return {
+            "date": date or "",
+            "deck_name": self._deck.name or self.name or "",
+            "format": self._deck.format or "",
+            "archetype": self._deck.archetype.name if self._deck.archetype else "",
+            "author": metadata.get("author") or self._deck.source or "",
+            "url": url,
+            "maindeck_cards": self._deck.decklist,
+        }
+
 
 def from_arena(path: PathLike) -> Deck:
     """Import deck from a MTG Arena deckfile format (.txt).
@@ -465,3 +490,45 @@ def convert(
         for deckfile in deckfiles:
             dst_dir = (root / deckfile.relative_to(folder)).parent
             _convert_file(deckfile, fmt, dst_dir)
+
+
+def export_decks_to_csv(
+        decks: list[Deck], filepath: PathLike, format_filter: str = "") -> None:
+    """Export a list of Deck objects to a CSV file.
+
+    Args:
+        decks: list of Deck objects to export
+        filepath: destination CSV file path
+        format_filter: optionally, filter to only decks matching this format (e.g., "legacy", "modern")
+    """
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    
+    fieldnames = ["date", "deck_name", "format", "archetype", "author", "url", "maindeck_cards"]
+    
+    filtered_decks = [d for d in decks if not format_filter or d.format.lower() == format_filter.lower()] if format_filter else decks
+    
+    _log.info(f"Exporting {len(filtered_decks)} decks to CSV: '{filepath}'...")
+    
+    with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for deck in filtered_decks:
+            # Extract data directly from deck without using Exporter (to avoid Scryfall dependency)
+            metadata = deck.metadata
+            date = metadata.get("date")
+            if date:
+                date = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+            
+            url = metadata.get("url") or metadata.get("video_url") or ""
+            
+            row = {
+                "date": date or "",
+                "deck_name": deck.name or "",
+                "format": deck.format or "",
+                "archetype": deck.archetype.name if deck.archetype else "",
+                "author": metadata.get("author") or deck.source or "",
+                "url": url,
+                "maindeck_cards": deck.decklist,
+            }
+            writer.writerow(row)

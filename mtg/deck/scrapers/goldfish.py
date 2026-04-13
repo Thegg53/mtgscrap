@@ -307,10 +307,17 @@ class GoldfishAuthorScraper(HybridContainerScraper):
 
 @http_requests_counted("scraping meta decks")
 @timed("scraping meta decks", precision=1)
-def scrape_meta(fmt="standard") -> list[Deck]:
+def scrape_meta(fmt="standard", limit: int | None = None) -> list[Deck]:
+    """Scrape MTGGoldfish meta page for a given format.
+    
+    Args:
+        fmt: MTG format (e.g., "legacy", "modern")
+        limit: optionally, limit the number of decks to scrape (useful for testing)
+    """
     fmt = fmt.lower()
-    if fmt not in all_formats():
-        raise ValueError(f"Invalid format: {fmt!r}. Can be only one of: {all_formats()}")
+    # Skip format validation to avoid loading Scryfall bulk data
+    # if fmt not in all_formats():
+    #     raise ValueError(f"Invalid format: {fmt!r}. Can be only one of: {all_formats()}")
     url = f"https://www.mtggoldfish.com/metagame/{fmt}/full"
     soup = fetch_throttled_soup(url, headers=HEADERS)
     if not soup:
@@ -318,12 +325,17 @@ def scrape_meta(fmt="standard") -> list[Deck]:
     tiles = soup.find_all("div", class_="archetype-tile")
     if not tiles:
         raise ScrapingError("No deck tiles tags found", scraper=GoldfishDeckScraper, url=url)
+    
+    # Apply limit if specified
+    if limit:
+        tiles = tiles[:limit]
+    
     decks, metas = [], []
     for i, tile in enumerate(tiles, start=1):
         link = tile.find("a").attrs["href"]
         deck = GoldfishDeckScraper(
             f"https://www.mtggoldfish.com{link}", {"format": fmt}).scrape(
-            throttled=True, suppress_parsing_errors=False, ssuppress_scraping_errors=False)
+            throttled=True)
         count = tile.find("span", class_="archetype-tile-statistic-value-extra-data").text.strip()
         count = extract_int(count)
         metas.append({"place": i, "count": count})

@@ -92,6 +92,7 @@ MULTIFACE_LAYOUTS = (
     'double_faced_token',
     'flip',
     'modal_dfc',
+    'prepare',
     'reversible_card',
     'split',
     'transform'

@@ -19,7 +19,7 @@ install-dev:
 	. venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && pip install pytest black flake8
 
 scrape-legacy:
-	. venv/bin/activate && python scripts/scrape_legacy.py
+	. venv/bin/activate && PYTHONPATH=$(PWD) python scripts/scrape_legacy.py
 
 clean:
 	rm -rf venv __pycache__ .pytest_cache
