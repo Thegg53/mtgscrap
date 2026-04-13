@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Literal
 
 from mtg import OUTPUT_DIR, PathLike
-from mtg.deck import CardNotFound, Deck, DeckParser, Mode
+# Removed CardNotFound, Deck, DeckParser, Mode imports - not needed for export_decks_to_csv()
 from mtg.utils import ParsingError, from_iterable
 from mtg.utils.files import getdir, getfile, sanitize_filename, truncate_path
 from mtg.utils.json import from_json as deserialize_json, to_json
@@ -493,7 +493,7 @@ def convert(
 
 
 def export_decks_to_csv(
-        decks: list[Deck], filepath: PathLike, format_filter: str = "") -> None:
+        decks: list, filepath: PathLike, format_filter: str = "") -> None:
     """Export a list of Deck objects to a CSV file.
 
     Args:

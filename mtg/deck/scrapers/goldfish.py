@@ -2,32 +2,27 @@
 
     mtg.deck.scrapers.goldfish
     ~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Scrape MTGGoldfish decklists.
+    Scrape MTGGoldfish Legacy meta decklists and sideboard data.
 
     @author: mazz3rr
 
 """
 import logging
+import random
+import time
 from dataclasses import dataclass, field
-from typing import override
-
-import dateutil.parser
-from bs4 import Tag
+from datetime import datetime
 
 from mtg import Json
-from mtg.deck.scrapers import DeckScraper, DeckUrlsContainerScraper, HybridContainerScraper, \
-    TagBasedDeckParser, UrlHook, throttled_deck_scraper
-from mtg.utils import ParsingError, extract_int, timed
-from mtg.utils.scrape import ScrapingError, http_requests_counted, strip_url_query, \
-    fetch_throttled_soup
+from mtg.utils import extract_int, timed
+from mtg.utils.scrape import ScrapingError, http_requests_counted, fetch_throttled_soup
 
 _log = logging.getLogger(__name__)
 
 
-# Minimal Deck class for sideboard scraping
 @dataclass
 class MinimalDeck:
-    """Minimal deck object holding only what's needed for sideboard scraping."""
+    """Minimal deck object for sideboard scraping."""
     name: str
     format: str = "legacy"
     archetype: str = ""
@@ -40,8 +35,6 @@ class MinimalDeck:
         for key, value in kwargs.items():
             if key == "meta":
                 self.metadata.update(value)
-            elif key == "mode":
-                self.metadata["mode"] = value
             elif key == "sideboard":
                 self.metadata["sideboard"] = value
             else:
@@ -49,295 +42,16 @@ class MinimalDeck:
 
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/96.0.4664.113 Safari/537.36}",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,"
-              "image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9"
 }
-CONSENT_XPATH = "//button[@aria-label='Consent']"
 URL_PREFIX = "https://www.mtggoldfish.com"
-URL_HOOKS = (
-    # regular deck
-    UrlHook(
-        ('"mtggoldfish.com/deck/"', ),
-        ('-"/custom/"', ),
-    ),
-    # archetype deck
-    UrlHook(
-        ('"mtggoldfish.com/archetype/"', ),
-        ('-"/custom/"', ),
-    ),
-    # tournament
-    UrlHook(
-        ('"mtggoldfish.com/tournament/"', ),
-    ),
-    # player
-    UrlHook(
-        ('"mtggoldfish.com/deck_searches/create?"', '"deck_search%5Bplayer%5D="'),
-    ),
-    # article & author
-    UrlHook(
-        ('"mtggoldfish.com/articles/"', ),
-    ),
-)
-
-
-# alternative approach would be to scrape:
-# self._soup.find("input", id="deck_input_deck").attrs["value"] which contains a decklist in
-# Arena format (albeit with the need to .replace("sideboard", "Sideboard") or maybe some other
-# safer means to achieve the same effect)
-# yet another alternative approach would be to scrape:
-# https://www.mtggoldfish.com/deck/arena_download/{DECK_ID} but this entails another request and
-# parsing a DECK_ID from the first URL
-class GoldfishDeckTagParser(TagBasedDeckParser):
-    """Parser of a MTGGoldfish decklist HTML tag.
-    """
-    def _parse_header_tag(self, header_tag: Tag) -> None:
-        title_tag = header_tag.find("h1", class_="title")
-        self._metadata["name"], *_ = title_tag.text.strip().split("\n")
-        author_tag = title_tag.find("span")
-        if author_tag is not None:
-            self._metadata["author"] = author_tag.text.strip().removeprefix("by ")
-
-    def _parse_info_tag(self, info_tag: Tag) -> None:
-        lines = [l for l in info_tag.text.splitlines() if l]
-        source_idx = None
-        for i, line in enumerate(lines):
-            if line.startswith("Format:"):
-                fmt = line.removeprefix("Format:").strip().lower()
-                self._update_fmt(fmt)
-            elif line.startswith("Event:"):
-                self._metadata["event"] = line.removeprefix("Event:").strip()
-            elif line.startswith("Deck Source:"):
-                source_idx = i + 1
-            elif line.startswith("Deck Date:"):
-                date_text = line.removeprefix("Deck Date:").strip()
-                self._metadata["date"] = dateutil.parser.parse(date_text).date()
-            elif line.startswith("Archetype:"):
-                self._update_archetype_or_theme(line.removeprefix("Archetype:").strip())
-        if source_idx is not None:
-            self._metadata["original_source"] = lines[source_idx].strip()
-
-    @override
-    def _parse_metadata(self) -> None:
-        header_tag = self._deck_tag.find("div", class_="header-container")
-        self._parse_header_tag(header_tag)
-        info_tag = self._deck_tag.find("p", class_="deck-container-information")
-        self._parse_info_tag(info_tag)
-
-    def _parse_decklist_tag(self, deck_tag: Tag) -> None:
-        for tag in deck_tag.descendants:
-            if tag.name == "tr" and tag.has_attr(
-                    "class") and "deck-category-header" in tag.attrs["class"]:
-                if "Sideboard" in tag.text:
-                    self._state.shift_to_sideboard()
-                elif "Commander" in tag.text:
-                    self._state.shift_to_commander()
-                elif "Companion" in tag.text:
-                    self._state.shift_to_companion()
-                elif not self._state.is_maindeck:
-                    self._state.shift_to_maindeck()
-            elif tag.name == "tr":
-                td_tags = tag.find_all("td")
-                if td_tags and len(td_tags) >= 3:
-                    qty_tag, name_tag, *_ = td_tags
-                    quantity = extract_int(qty_tag.text)
-                    name = name_tag.text.strip()
-                    cards = self.get_playset(self.find_card(name), quantity)
-                    if self._state.is_maindeck:
-                        self._maindeck += cards
-                    elif self._state.is_sideboard:
-                        self._sideboard += cards
-                    elif self._state.is_commander:
-                        self._set_commander(cards[0])
-                    elif self._state.is_companion:
-                        self._companion = cards[0]
-
-    @override
-    def _parse_deck(self) -> None:
-        decklist_tag = self._deck_tag.find("table", class_="deck-view-deck-table")
-        if decklist_tag is None:
-            raise ParsingError("Decklist tag not found")
-        self._parse_decklist_tag(decklist_tag)
-
-
-@throttled_deck_scraper
-@DeckScraper.registered
-class GoldfishDeckScraper(DeckScraper):
-    """Scraper of MTGGoldfish decklist page.
-    """
-    SELENIUM_PARAMS = {  # override
-        "xpath": "//table[@class='deck-view-deck-table']",
-        "consent_xpath": CONSENT_XPATH
-    }
-
-    @staticmethod
-    @override
-    def is_valid_url(url: str) -> bool:
-        url = url.lower()
-        return (("mtggoldfish.com/deck/" in url or "mtggoldfish.com/archetype/" in url)
-                and "/custom/" not in url)
-
-    @staticmethod
-    @override
-    def sanitize_url(url: str) -> str:
-        url = strip_url_query(url)
-        if "/visual/" in url:
-            url = url.replace("/visual/", "/")
-        return url
-
-    # FIXME: this is never reached when faced with a Soft404 page as Selenium fails with timeout
-    #  exception sooner than that (#378)
-    @override
-    def _is_soft_404_error(self) -> bool:
-        tag = self._soup.find("h2")
-        return tag and "Page not found" in tag.text
-
-    @override
-    def _get_sub_parser(self) -> GoldfishDeckTagParser:
-        deck_tag = self._soup.find("div", class_="deck-container")
-        if deck_tag is None:
-            raise ScrapingError("Deck tag not found", scraper=type(self), url=self.url)
-        return GoldfishDeckTagParser(deck_tag, self._metadata)
-
-    @override
-    def _parse_metadata(self) -> None:
-        pass
-
-    @override
-    def _parse_deck(self) -> None:
-        pass
-
-
-@DeckUrlsContainerScraper.registered
-class GoldfishTournamentScraper(DeckUrlsContainerScraper):
-    """Scraper of MTG Goldfish tournament page.
-    """
-    CONTAINER_NAME = "Goldfish tournament"  # override
-    HEADERS = HEADERS  # override
-    DECK_SCRAPERS = GoldfishDeckScraper,  # override
-    DECK_URL_PREFIX = URL_PREFIX  # override
-
-    @staticmethod
-    @override
-    def is_valid_url(url: str) -> bool:
-        return "mtggoldfish.com/tournament/" in url.lower()
-
-    @staticmethod
-    @override
-    def sanitize_url(url: str) -> str:
-        if "#" in url:
-            url, _ = url.rsplit("#", maxsplit=1)
-            return url
-        return url
-
-    @override
-    def _collect(self) -> list[str]:
-        table_tag = self._soup.find("table", class_="table-tournament")
-        if not table_tag:
-            raise ScrapingError("Tournament table tag not found", scraper=type(self), url=self.url)
-        deck_tags = table_tag.find_all("a", href=lambda h: h and "/deck/" in h)
-        return [deck_tag.attrs["href"] for deck_tag in deck_tags]
-
-
-@DeckUrlsContainerScraper.registered
-class GoldfishPlayerScraper(DeckUrlsContainerScraper):
-    """Scraper of MTG Goldfish player search page.
-    """
-    CONTAINER_NAME = "Goldfish player"  # override
-    HEADERS = HEADERS  # override
-    DECK_SCRAPERS = GoldfishDeckScraper,  # override
-    DECK_URL_PREFIX = URL_PREFIX  # override
-
-    @staticmethod
-    @override
-    def is_valid_url(url: str) -> bool:
-        return ("mtggoldfish.com/deck_searches/create?" in url.lower() and
-                "deck_search%5Bplayer%5D=" in url)
-
-    @override
-    def _collect(self) -> list[str]:
-        table_tag = self._soup.find("table", class_=lambda c: c and "table-striped" in c)
-        if not table_tag:
-            raise ScrapingError("<table> tag not found", scraper=type(self), url=self.url)
-        deck_tags = table_tag.find_all("a", href=lambda h: h and "/deck/" in h)
-        return [deck_tag.attrs["href"] for deck_tag in deck_tags]
-
-
-@HybridContainerScraper.registered
-class GoldfishArticleScraper(HybridContainerScraper):
-    """Scraper of MTG Goldfish article page.
-    """
-    SELENIUM_PARAMS = {  # override
-        "xpath": "//div[@class='deck-container']",
-        "consent_xpath": CONSENT_XPATH,
-        "wait_for_all": True
-    }
-    CONTAINER_NAME = "Goldfish article"  # override
-    TAG_BASED_DECK_PARSER = GoldfishDeckTagParser  # override
-    CONTAINER_SCRAPERS = GoldfishTournamentScraper,  # override
-
-    @staticmethod
-    @override
-    def is_valid_url(url: str) -> bool:
-        return f"mtggoldfish.com/articles/" in url.lower() and "/search" not in url.lower()
-
-    @staticmethod
-    @override
-    def sanitize_url(url: str) -> str:
-        return strip_url_query(url)
-
-    def _collect_urls(self) -> tuple[list[str], list[str]]:
-        main_tag = self._soup.find("div", class_="article-contents")
-        if not main_tag:
-            raise ScrapingError("Article tag not found", scraper=type(self), url=self.url)
-
-        # filter out paragraphs that are covered by tag-based deck parser
-        p_tags = [t for t in main_tag.find_all("p") if not t.find("div", class_="deck-container")]
-
-        return self._find_links_in_tags(*p_tags)
-
-    @override
-    def _collect(self) -> tuple[list[str], list[Tag], list[Json], list[str]]:
-        deck_tags = [*self._soup.find_all("div", class_="deck-container")]
-        deck_urls, container_urls = self._collect_urls()
-        return deck_urls, deck_tags, [], container_urls
-
-
-@HybridContainerScraper.registered
-class GoldfishAuthorScraper(HybridContainerScraper):
-    """Scraper of MTG Goldfish author page.
-    """
-    CONTAINER_NAME = "Goldfish author"  # override
-    CONTAINER_SCRAPERS = GoldfishArticleScraper,  # override
-    HEADERS = HEADERS  # override
-    DECK_URL_PREFIX = URL_PREFIX  # override
-
-    @staticmethod
-    @override
-    def is_valid_url(url: str) -> bool:
-        return "mtggoldfish.com/articles/search?" in url.lower() and "author=" in url
-
-    @override
-    def _collect(self) -> tuple[list[str], list[Tag], list[Json], list[str]]:
-        container_tag = self._soup.select_one("div.articles-container")
-        if not container_tag:
-            raise ScrapingError("Container <div> tag not found", type(self), self.url)
-        _, container_urls = self._find_links_in_tags(
-            container_tag, url_prefix=self.DECK_URL_PREFIX)
-        return [], [], [], container_urls
 
 
 def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
-    """Extract sideboard cards from an MTGGoldfish archetype page.
+    """Extract sideboard cards from MTGGoldfish archetype page.
     
-    Finds the aggregated sideboard section (further down the page, not the decklist sideboard at top).
-    
-    Args:
-        archetype_url: URL to the archetype page
-    
-    Returns:
-        List of dicts with: card_name, avg_count, percentage_of_decks
+    Returns: List of dicts with card_name, avg_count, percentage
     """
     soup = fetch_throttled_soup(archetype_url, headers=HEADERS)
     if not soup:
@@ -345,46 +59,29 @@ def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
         return []
     
     sideboard_cards = []
-    
-    # Find all h3 tags with "Sideboard" text, then use the last one (aggregated stats section)
     sideboard_headings = soup.find_all("h3", string=lambda s: s and "Sideboard" in s)
-    _log.debug(f"Found {len(sideboard_headings)} 'Sideboard' h3 tags on {archetype_url}")
     
     if not sideboard_headings:
-        _log.debug(f"No Sideboard section found on {archetype_url}")
         return []
     
-    # Use the last Sideboard h3 (the aggregated one, not the decklist one)
     sideboard_heading = sideboard_headings[-1]
-    _log.debug(f"Using last Sideboard heading: {sideboard_heading.text}")
-    
-    # Get the parent container (spoiler-card-container)
     container = sideboard_heading.find_parent("div", class_="spoiler-card-container")
     if not container:
-        _log.debug("No spoiler-card-container found")
         return []
     
-    _log.debug(f"Container found, looking for spoiler-card divs...")
-    
-    # Find all individual spoiler-card divs after the heading
     card_divs = container.find_all("div", class_="spoiler-card", recursive=False)
-    _log.debug(f"Found {len(card_divs)} spoiler-card divs in container")
     
     for card_div in card_divs:
-        # Find the image inside this card div
         img = card_div.find("img", class_="price-card-image-image")
         if not img:
             continue
         
         card_alt = img.get("alt", "")
-        # Extract card name from alt text (format: "Card Name <variant> [set]")
         card_name = card_alt.split(" <")[0] if "<" in card_alt else card_alt.split(" [")[0]
         
-        # Get stats text - look for p tag with "text" in class name within this card div
         stats_p = card_div.find("p", class_=lambda c: c and "text" in c)
         if stats_p:
-            text = stats_p.text.strip()  # Format: "2.0 in 100% of decks"
-            _log.debug(f"  Card: {card_name} - Stats: {text}")
+            text = stats_p.text.strip()
             try:
                 parts = text.split(" in ")
                 avg_count = float(parts[0])
@@ -396,12 +93,9 @@ def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
                     "avg_count": avg_count,
                     "percentage": percentage
                 })
-            except (ValueError, IndexError) as e:
-                _log.warning(f"Failed to parse sideboard stats: {text!r} - {e}")
-        else:
-            _log.debug(f"  No stats paragraph found for card: {card_alt}")
+            except (ValueError, IndexError):
+                pass
     
-    _log.debug(f"Extracted {len(sideboard_cards)} sideboard cards total")
     return sideboard_cards
 
 
@@ -412,26 +106,22 @@ def scrape_meta(fmt="standard", limit: int | None = None, throttle: bool = False
     
     Args:
         fmt: MTG format (e.g., "legacy", "modern")
-        limit: optionally, limit the number of decks to scrape (useful for testing)
-        throttle: add random 1-3 second delay between deck scrapes to avoid blocking
+        limit: optionally, limit the number of decks to scrape
+        throttle: add random 1-3 second delays between deck scrapes
     
     Returns:
         List of MinimalDeck objects with sideboard data
     """
-    from datetime import datetime
-    import random
-    import time
-    
     fmt = fmt.lower()
     url = f"https://www.mtggoldfish.com/metagame/{fmt}/full"
     soup = fetch_throttled_soup(url, headers=HEADERS)
     if not soup:
         raise ScrapingError(f"Failed to fetch {url}")
+    
     tiles = soup.find_all("div", class_="archetype-tile")
     if not tiles:
         raise ScrapingError("No archetype tiles found")
     
-    # Apply limit if specified
     if limit:
         tiles = tiles[:limit]
     
@@ -443,15 +133,12 @@ def scrape_meta(fmt="standard", limit: int | None = None, throttle: bool = False
         
         archetype_url = f"https://www.mtggoldfish.com{link.attrs['href']}"
         
-        # Extract archetype name from URL (e.g., /archetype/legacy-dimir-tempo -> Dimir Tempo)
+        # Extract archetype name from URL
         archetype_slug = link.attrs['href'].split("/")[-1]
-        # Remove format prefix (e.g., "legacy-")
         if "-" in archetype_slug:
             archetype_slug = "-".join(archetype_slug.split("-")[1:])
-        # Convert slug to title case (dimir-tempo -> Dimir Tempo)
         archetype_name = " ".join(word.capitalize() for word in archetype_slug.split("-"))
         
-        # Create minimal deck object
         deck = MinimalDeck(name=archetype_name, format=fmt, archetype=archetype_name)
         
         count = tile.find("span", class_="archetype-tile-statistic-value-extra-data").text.strip()
@@ -465,12 +152,10 @@ def scrape_meta(fmt="standard", limit: int | None = None, throttle: bool = False
         meta["date"] = datetime.now().strftime("%Y-%m-%d")
         deck.update_metadata(meta=meta)
         
-        # Scrape sideboard data for this archetype
         sideboard_data = scrape_archetype_sideboard(archetype_url)
         if sideboard_data:
             deck.update_metadata(sideboard=sideboard_data)
         
-        # Add throttling delay between decks (except after the last one)
         if throttle and idx < len(decks) - 1:
             delay = random.uniform(1, 3)
             _log.debug(f"Throttling: waiting {delay:.2f}s before next deck")
