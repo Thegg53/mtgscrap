@@ -305,6 +305,78 @@ class GoldfishAuthorScraper(HybridContainerScraper):
         return [], [], [], container_urls
 
 
+def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
+    """Extract sideboard cards from an MTGGoldfish archetype page.
+    
+    Finds the aggregated sideboard section (further down the page, not the decklist sideboard at top).
+    
+    Args:
+        archetype_url: URL to the archetype page
+    
+    Returns:
+        List of dicts with: card_name, avg_count, percentage_of_decks
+    """
+    soup = fetch_throttled_soup(archetype_url, headers=HEADERS)
+    if not soup:
+        _log.warning(f"Failed to fetch sideboard data from {archetype_url}")
+        return []
+    
+    sideboard_cards = []
+    
+    # Find all h3 tags with "Sideboard" text, then use the last one (aggregated stats section)
+    sideboard_headings = soup.find_all("h3", string=lambda s: s and "Sideboard" in s)
+    _log.debug(f"Found {len(sideboard_headings)} 'Sideboard' h3 tags on {archetype_url}")
+    
+    if not sideboard_headings:
+        _log.debug(f"No Sideboard section found on {archetype_url}")
+        return []
+    
+    # Use the last Sideboard h3 (the aggregated one, not the decklist one)
+    sideboard_heading = sideboard_headings[-1]
+    _log.debug(f"Using last Sideboard heading: {sideboard_heading.text}")
+    
+    # Find the container with sideboard cards (usually divs after the heading)
+    container = sideboard_heading.find_next("div")
+    if not container:
+        _log.debug("No container div found after Sideboard heading")
+        return []
+    
+    _log.debug(f"Container found, looking for images...")
+    
+    # Find all card images in the sideboard section
+    images = container.find_all("img", class_="price-card-image-image")
+    _log.debug(f"Found {len(images)} card images in sideboard section")
+    
+    for img in images:
+        card_alt = img.get("alt", "")
+        # Extract card name from alt text (format: "Card Name <variant> [set]")
+        card_name = card_alt.split(" <")[0] if "<" in card_alt else card_alt.split(" [")[0]
+        
+        # Get stats from the next <p> tag with class containing "text"
+        stats_p = img.find_next("p", class_=lambda c: c and "text" in c)
+        if stats_p:
+            text = stats_p.text.strip()  # Format: "2.0 in 100% of decks"
+            _log.debug(f"  Card: {card_name} - Stats: {text}")
+            try:
+                parts = text.split(" in ")
+                avg_count = float(parts[0])
+                percentage_str = parts[1].split("%")[0] if len(parts) > 1 else "0"
+                percentage = int(percentage_str)
+                
+                sideboard_cards.append({
+                    "card_name": card_name,
+                    "avg_count": avg_count,
+                    "percentage": percentage
+                })
+            except (ValueError, IndexError) as e:
+                _log.warning(f"Failed to parse sideboard stats: {text!r} - {e}")
+        else:
+            _log.debug(f"  No stats paragraph found for image: {card_alt}")
+    
+    _log.debug(f"Extracted {len(sideboard_cards)} sideboard cards total")
+    return sideboard_cards
+
+
 @http_requests_counted("scraping meta decks")
 @timed("scraping meta decks", precision=1)
 def scrape_meta(fmt="standard", limit: int | None = None) -> list[Deck]:
@@ -333,16 +405,23 @@ def scrape_meta(fmt="standard", limit: int | None = None) -> list[Deck]:
     decks, metas = [], []
     for i, tile in enumerate(tiles, start=1):
         link = tile.find("a").attrs["href"]
+        archetype_url = f"https://www.mtggoldfish.com{link}"
         deck = GoldfishDeckScraper(
-            f"https://www.mtggoldfish.com{link}", {"format": fmt}).scrape(
+            archetype_url, {"format": fmt}).scrape(
             throttled=True)
         count = tile.find("span", class_="archetype-tile-statistic-value-extra-data").text.strip()
         count = extract_int(count)
         metas.append({"place": i, "count": count})
-        decks.append(deck)
+        decks.append((deck, archetype_url))
     total = sum(m["count"] for m in metas)
-    for deck, meta in zip(decks, metas):
+    for (deck, archetype_url), meta in zip(decks, metas):
         meta["share"] = meta["count"] * 100 / total
         deck.update_metadata(meta=meta)
         deck.update_metadata(mode=Mode.BO3.value)
-    return decks
+        
+        # Scrape sideboard data for this archetype
+        sideboard_data = scrape_archetype_sideboard(archetype_url)
+        if sideboard_data:
+            deck.update_metadata(sideboard=sideboard_data)
+    
+    return [deck for deck, _ in decks]

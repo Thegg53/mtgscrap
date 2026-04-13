@@ -504,7 +504,7 @@ def export_decks_to_csv(
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
     
-    fieldnames = ["date", "deck_name", "format", "archetype", "author", "url", "maindeck_cards"]
+    fieldnames = ["date", "deck_name", "format", "archetype", "author", "url", "maindeck_cards", "sideboard_cards"]
     
     filtered_decks = [d for d in decks if not format_filter or d.format.lower() == format_filter.lower()] if format_filter else decks
     
@@ -522,6 +522,10 @@ def export_decks_to_csv(
             
             url = metadata.get("url") or metadata.get("video_url") or ""
             
+            # Format sideboard data
+            sideboard_data = metadata.get("sideboard", [])
+            sideboard_str = json.dumps(sideboard_data) if sideboard_data else ""
+            
             row = {
                 "date": date or "",
                 "deck_name": deck.name or "",
@@ -530,5 +534,6 @@ def export_decks_to_csv(
                 "author": metadata.get("author") or deck.source or "",
                 "url": url,
                 "maindeck_cards": deck.decklist,
+                "sideboard_cards": sideboard_str,
             }
             writer.writerow(row)

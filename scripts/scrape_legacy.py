@@ -10,28 +10,33 @@ from pathlib import Path
 from mtg.deck.scrapers.goldfish import scrape_meta
 from mtg.deck.export import export_decks_to_csv
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 
 
-def scrape_legacy_decklists(limit: int | None = None) -> None:
+def scrape_legacy_decklists(limit: int | None = None, debug: bool = False) -> None:
     """Scrape MTGGoldfish Legacy format meta page and export to CSV.
     
     Args:
         limit: optionally, limit the number of decks to scrape (useful for testing)
+        debug: enable debug logging
     """
+    # Configure logging
+    log_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+    
+    if debug:
+        logger.debug("Debug mode enabled")
     
     logger.info("Starting MTGGoldfish Legacy scraper...")
     
     try:
         # Scrape Legacy format decklists from MTGGoldfish meta page
-        logger.info(f"Scraping MTGGoldfish meta page for Legacy format{f' (limit: {limit})' if limit else ''}...")
+        limit_str = f" (limit: {limit})" if limit else ""
+        logger.info(f"Scraping MTGGoldfish meta page for Legacy format{limit_str}...")
         decks = scrape_meta(fmt="legacy", limit=limit)
         
         if not decks:
@@ -40,12 +45,23 @@ def scrape_legacy_decklists(limit: int | None = None) -> None:
         
         logger.info(f"Successfully scraped {len(decks)} Legacy decklists")
         
+        if debug:
+            for i, deck in enumerate(decks, 1):
+                logger.debug(f"Deck {i}: {deck.name} ({deck.archetype}) - {deck.format}")
+                sideboard = deck.metadata.get("sideboard", [])
+                if sideboard:
+                    logger.debug(f"  Sideboard cards: {len(sideboard)}")
+                    for card in sideboard[:3]:  # Show first 3
+                        logger.debug(f"    - {card['card_name']}: {card['avg_count']} in {card['percentage']}%")
+        
         # Create output directory if it doesn't exist
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         
         # Generate timestamped CSV filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         csv_filename = OUTPUT_DIR / f"legacy_decklists_{timestamp}.csv"
+        
+        logger.debug(f"Exporting to: {csv_filename}")
         
         # Export to CSV (format_filter already applied during scraping, but we filter in export too)
         export_decks_to_csv(
@@ -70,6 +86,11 @@ if __name__ == "__main__":
         default=None,
         help="Limit the number of decks to scrape (useful for testing)"
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging with detailed output"
+    )
     args = parser.parse_args()
     
-    scrape_legacy_decklists(limit=args.limit)
+    scrape_legacy_decklists(limit=args.limit, debug=args.debug)
