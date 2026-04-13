@@ -335,25 +335,30 @@ def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
     sideboard_heading = sideboard_headings[-1]
     _log.debug(f"Using last Sideboard heading: {sideboard_heading.text}")
     
-    # Find the container with sideboard cards (usually divs after the heading)
-    container = sideboard_heading.find_next("div")
+    # Get the parent container (spoiler-card-container)
+    container = sideboard_heading.find_parent("div", class_="spoiler-card-container")
     if not container:
-        _log.debug("No container div found after Sideboard heading")
+        _log.debug("No spoiler-card-container found")
         return []
     
-    _log.debug(f"Container found, looking for images...")
+    _log.debug(f"Container found, looking for spoiler-card divs...")
     
-    # Find all card images in the sideboard section
-    images = container.find_all("img", class_="price-card-image-image")
-    _log.debug(f"Found {len(images)} card images in sideboard section")
+    # Find all individual spoiler-card divs after the heading
+    card_divs = container.find_all("div", class_="spoiler-card", recursive=False)
+    _log.debug(f"Found {len(card_divs)} spoiler-card divs in container")
     
-    for img in images:
+    for card_div in card_divs:
+        # Find the image inside this card div
+        img = card_div.find("img", class_="price-card-image-image")
+        if not img:
+            continue
+        
         card_alt = img.get("alt", "")
         # Extract card name from alt text (format: "Card Name <variant> [set]")
         card_name = card_alt.split(" <")[0] if "<" in card_alt else card_alt.split(" [")[0]
         
-        # Get stats from the next <p> tag with class containing "text"
-        stats_p = img.find_next("p", class_=lambda c: c and "text" in c)
+        # Get stats text - look for p tag with "text" in class name within this card div
+        stats_p = card_div.find("p", class_=lambda c: c and "text" in c)
         if stats_p:
             text = stats_p.text.strip()  # Format: "2.0 in 100% of decks"
             _log.debug(f"  Card: {card_name} - Stats: {text}")
@@ -371,7 +376,7 @@ def scrape_archetype_sideboard(archetype_url: str) -> list[dict]:
             except (ValueError, IndexError) as e:
                 _log.warning(f"Failed to parse sideboard stats: {text!r} - {e}")
         else:
-            _log.debug(f"  No stats paragraph found for image: {card_alt}")
+            _log.debug(f"  No stats paragraph found for card: {card_alt}")
     
     _log.debug(f"Extracted {len(sideboard_cards)} sideboard cards total")
     return sideboard_cards
