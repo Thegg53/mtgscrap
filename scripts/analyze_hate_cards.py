@@ -52,15 +52,38 @@ def extract_timestamp(csv_path: Path) -> str:
     return ""
 
 
+def clean_archetype_name(archetype: str) -> str:
+    """Remove UUID suffix from archetype name."""
+    # Remove UUID pattern like: 468d6491 E6a9 46c8 B9fb Da35bfca78fa
+    # UUID format: 8-4-4-4-12 hex digits separated by spaces/hyphens
+    import re
+    # Match and remove UUID at the end (preceded by space)
+    cleaned = re.sub(r'\s+[0-9a-fA-F]{8}\s+[0-9a-fA-F]{4}\s+[0-9a-fA-F]{4}\s+[0-9a-fA-F]{4}\s+[0-9a-fA-F]{12}$', '', archetype)
+    return cleaned.strip()
+
+
 def analyze_hate_cards(csv_path: Path) -> dict:
     """Analyze hate cards per archetype from CSV."""
     hate_cards = load_hate_cards()
-    archetype_hate_cards = defaultdict(lambda: {"maindeck": [], "sideboard": []})
+    archetype_hate_cards = {}  # Use regular dict to preserve order + handle duplicates
+    archetype_counts = defaultdict(int)  # Track duplicate archetype names
     
     with open(csv_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            archetype = row["archetype"]
+            archetype = clean_archetype_name(row["archetype"])
+            
+            # Handle duplicate archetype names
+            archetype_counts[archetype] += 1
+            if archetype_counts[archetype] > 1:
+                # Append counter for duplicates
+                archetype_key = f"{archetype} {archetype_counts[archetype]}"
+            else:
+                archetype_key = archetype
+            
+            # Initialize if not seen before
+            if archetype_key not in archetype_hate_cards:
+                archetype_hate_cards[archetype_key] = {"maindeck": [], "sideboard": []}
             
             # Process maindeck cards
             if row.get("maindeck_cards"):
@@ -69,7 +92,7 @@ def analyze_hate_cards(csv_path: Path) -> dict:
                     for card in maindeck_data:
                         card_name = card["card_name"].lower()
                         if card_name in hate_cards:
-                            archetype_hate_cards[archetype]["maindeck"].append(card)
+                            archetype_hate_cards[archetype_key]["maindeck"].append(card)
                 except (json.JSONDecodeError, KeyError):
                     pass
             
@@ -80,7 +103,7 @@ def analyze_hate_cards(csv_path: Path) -> dict:
                     for card in sideboard_data:
                         card_name = card["card_name"].lower()
                         if card_name in hate_cards:
-                            archetype_hate_cards[archetype]["sideboard"].append(card)
+                            archetype_hate_cards[archetype_key]["sideboard"].append(card)
                 except (json.JSONDecodeError, KeyError):
                     pass
     
@@ -88,7 +111,7 @@ def analyze_hate_cards(csv_path: Path) -> dict:
 
 
 def generate_report(hate_cards_data: dict, csv_path: Path) -> str:
-    """Generate a formatted text report."""
+    """Generate a formatted text report, with numbered variants grouped consecutively."""
     lines = []
     lines.append("=" * 80)
     lines.append("LEGACY HATE CARDS ANALYSIS")
@@ -96,36 +119,59 @@ def generate_report(hate_cards_data: dict, csv_path: Path) -> str:
     lines.append("=" * 80)
     lines.append("")
     
-    for archetype in sorted(hate_cards_data.keys()):
-        data = hate_cards_data[archetype]
-        maindeck = data["maindeck"]
-        sideboard = data["sideboard"]
-        
-        if not maindeck and not sideboard:
+    processed = set()
+    
+    for archetype in hate_cards_data.keys():
+        # Skip if already processed (part of a numbered group)
+        if archetype in processed:
             continue
         
-        lines.append(f"\n{archetype.upper()}")
-        lines.append("-" * 80)
+        # Check if this archetype has numbered variants (e.g., "JESKAI CONTROL" and "JESKAI CONTROL 2")
+        base_name = archetype
+        if archetype and archetype[-1].isdigit() and archetype[-2] == ' ':
+            # This is a numbered archetype, find the base
+            base_name = archetype[:-2]
         
-        # Maindeck hate cards
-        if maindeck:
-            lines.append("\n  MAINDECK:")
-            for card in sorted(maindeck, key=lambda c: c["percentage"], reverse=True):
-                lines.append(
-                    f"    • {card['card_name']:40s} "
-                    f"avg: {card['avg_count']:>4.1f}x  |  {card['percentage']:>3d}% of decks"
-                )
+        # Find all variants of this archetype
+        variants = [base_name]
+        i = 2
+        while f"{base_name} {i}" in hate_cards_data:
+            variants.append(f"{base_name} {i}")
+            i += 1
         
-        # Sideboard hate cards
-        if sideboard:
-            lines.append("\n  SIDEBOARD:")
-            for card in sorted(sideboard, key=lambda c: c["percentage"], reverse=True):
-                lines.append(
-                    f"    • {card['card_name']:40s} "
-                    f"avg: {card['avg_count']:>4.1f}x  |  {card['percentage']:>3d}% of decks"
-                )
-        
-        lines.append("")
+        # Output all variants consecutively
+        for variant in variants:
+            if variant not in hate_cards_data or variant in processed:
+                continue
+            
+            data = hate_cards_data[variant]
+            if not data["maindeck"] and not data["sideboard"]:
+                processed.add(variant)
+                continue
+            
+            lines.append(f"\n{variant.upper()}")
+            lines.append("-" * 80)
+            
+            # Maindeck hate cards
+            if data["maindeck"]:
+                lines.append("\n  MAINDECK:")
+                for card in sorted(data["maindeck"], key=lambda c: c["percentage"], reverse=True):
+                    lines.append(
+                        f"    • {card['card_name']:40s} "
+                        f"avg: {card['avg_count']:>4.1f}x  |  {card['percentage']:>3d}% of decks"
+                    )
+            
+            # Sideboard hate cards
+            if data["sideboard"]:
+                lines.append("\n  SIDEBOARD:")
+                for card in sorted(data["sideboard"], key=lambda c: c["percentage"], reverse=True):
+                    lines.append(
+                        f"    • {card['card_name']:40s} "
+                        f"avg: {card['avg_count']:>4.1f}x  |  {card['percentage']:>3d}% of decks"
+                    )
+            
+            lines.append("")
+            processed.add(variant)
     
     lines.append("=" * 80)
     return "\n".join(lines)

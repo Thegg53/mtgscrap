@@ -2,6 +2,7 @@
 """
 Generate a printer-friendly PDF from hate cards report.
 Reads the latest report from _output/reports/ and creates a single-page PDF.
+Automatically scales font sizes to maximize readability while fitting on one page.
 """
 import logging
 import re
@@ -29,26 +30,45 @@ def extract_timestamp(report_path: Path) -> str:
     return ""
 
 
-def parse_report(report_path: Path) -> dict:
-    """Parse text report into structured data."""
-    archetypes = {}
+def parse_report(report_path: Path) -> list:
+    """
+    Parse text report into structured data.
+    Returns a list of archetypes (preserving order) with top 3 cards per section.
+    """
+    archetypes = []
     current_archetype = None
     current_section = None
+    archetype_dict = None
+    skip_next_line = False
     
     with open(report_path) as f:
         for line in f:
             line = line.rstrip()
             
-            # Skip headers and separators
+            # Skip header lines and separators
             if line.startswith("=") or not line.strip():
+                skip_next_line = False
                 continue
             
-            # Detect archetype headers (all caps, followed by dashes)
-            if line.isupper() and not line.startswith(" "):
-                current_archetype = line.strip()
-                archetypes[current_archetype] = {"maindeck": [], "sideboard": []}
-                current_section = None
+            # Skip known header lines
+            if "LEGACY HATE CARDS ANALYSIS" in line or line.startswith("Source:"):
                 continue
+            
+            # Skip lines that are just dashes (section separators)
+            if line.strip() and all(c == '-' for c in line.strip()):
+                skip_next_line = True
+                continue
+            
+            # Detect archetype headers (all caps, doesn't start with space, not preceded by dashes we just skipped)
+            if not skip_next_line and line.isupper() and not line.startswith(" "):
+                current_archetype = line.strip()
+                archetype_dict = {"name": current_archetype, "maindeck": [], "sideboard": []}
+                archetypes.append(archetype_dict)
+                current_section = None
+                skip_next_line = False
+                continue
+            
+            skip_next_line = False
             
             # Detect section headers (MAINDECK: or SIDEBOARD:)
             if "MAINDECK:" in line:
@@ -59,7 +79,7 @@ def parse_report(report_path: Path) -> dict:
                 continue
             
             # Parse card lines (• Card Name ...)
-            if current_archetype and current_section and "•" in line:
+            if archetype_dict and current_section and "•" in line:
                 # Extract card data from line like:
                 # "    • Card Name                                 avg:  X.Xx  |  YYY% of decks"
                 match = re.search(r"•\s+(.+?)\s{2,}avg:\s+([\d.]+)x\s+\|\s+(\d+)%", line)
@@ -68,7 +88,7 @@ def parse_report(report_path: Path) -> dict:
                     avg_count = float(match.group(2))
                     percentage = int(match.group(3))
                     
-                    archetypes[current_archetype][current_section].append({
+                    archetype_dict[current_section].append({
                         "name": card_name,
                         "avg": avg_count,
                         "pct": percentage
@@ -77,121 +97,239 @@ def parse_report(report_path: Path) -> dict:
     return archetypes
 
 
-def generate_html(archetypes: dict, report_path: Path) -> str:
-    """Generate HTML table for printing."""
+def format_card_list(cards: list, max_cards: int = 3) -> str:
+    """
+    Format up to max_cards cards as "Name avg/pct Name avg/pct ...".
+    Cards are assumed to be sorted by percentage descending.
+    """
+    if not cards:
+        return ""
+    
+    formatted = []
+    for card in cards[:max_cards]:
+        card_str = f"{card['name']} {card['avg']:.1f}/{card['pct']}%"
+        formatted.append(card_str)
+    
+    return " | ".join(formatted)
+
+
+def get_page_count(html_content: str) -> int:
+    """Get the number of pages by rendering the HTML without saving."""
+    try:
+        doc = HTML(string=html_content).render()
+        # Count pages from the document
+        return len(doc.pages)
+    except Exception as e:
+        # If rendering fails, assume many pages (conservative)
+        return 999
+
+
+def find_optimal_font_sizes(archetypes: list, report_path: Path, logger) -> dict:
+    """
+    Iteratively find the maximum font sizes that fit on a single page.
+    Starts with base sizes and increases until overflow is detected.
+    """
+    base_sizes = {
+        'body': 7.5,
+        'thead': 7.0,
+        'cards': 6.5,
+        'date': 6.5,
+    }
+    
+    current_scale = 1.0
+    increment = 0.02
+    last_working_sizes = base_sizes.copy()
+    max_iterations = 50
+    iteration = 0
+    
+    logger.info("Optimizing font sizes for single-page fit...")
+    
+    while iteration < max_iterations:
+        iteration += 1
+        
+        # Calculate sizes for current scale
+        sizes = {k: round(v * current_scale, 2) for k, v in base_sizes.items()}
+        
+        # Generate HTML and check page count
+        html_content = generate_html(archetypes, report_path, sizes)
+        pages = get_page_count(html_content)
+        
+        if pages == 1:
+            logger.info(f"  Scale {current_scale:.2f}x ({sizes['body']}pt body): ✓ 1 page")
+            last_working_sizes = sizes.copy()
+            current_scale += increment
+        else:
+            logger.info(f"  Scale {current_scale:.2f}x ({sizes['body']}pt body): ✗ {pages} pages - stopping")
+            break
+    
+    logger.info(f"\nOptimal sizes found:")
+    logger.info(f"  Body: {last_working_sizes['body']}pt")
+    logger.info(f"  Headers: {last_working_sizes['thead']}pt")
+    logger.info(f"  Cards: {last_working_sizes['cards']}pt")
+    
+    return last_working_sizes
+
+
+def generate_html(archetypes: list, report_path: Path, font_sizes: dict = None) -> str:
+    """
+    Generate compact HTML table for single-page A4 printing.
+    One row per archetype with top 3 cards per section.
+    Constraint: Must fit on exactly one A4 page.
+    
+    Args:
+        archetypes: List of archetype data
+        report_path: Path to the report file
+        font_sizes: Dict with keys: 'body', 'thead', 'cards', 'date' (in pt)
+    """
+    if font_sizes is None:
+        font_sizes = {
+            'body': 7.5,
+            'thead': 7.0,
+            'cards': 6.5,
+            'date': 6.5,
+        }
+    
     timestamp = extract_timestamp(report_path)
     date_str = f"20{timestamp[:2]}-{timestamp[2:4]}-{timestamp[4:6]}" if timestamp else "Unknown"
     
     html_parts = [
-        """<!DOCTYPE html>
+        f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Hate Cards Analysis</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 10mm;
-            font-size: 9pt;
-            line-height: 1.3;
-        }
-        h1 {
-            font-size: 16pt;
-            margin: 0 0 5pt 0;
+        @page {{
+            size: A4;
+            margin: 8mm;
+            orphans: 1;
+            widows: 1;
+        }}
+        html, body {{
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }}
+        body {{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: {font_sizes['body']}pt;
+            line-height: 1.2;
+            color: #000;
+        }}
+        h1 {{
+            font-size: 14pt;
+            margin: 0 0 2pt 0;
             text-align: center;
-        }
-        .date {
-            text-align: center;
-            font-size: 8pt;
-            margin-bottom: 10pt;
-            color: #666;
-        }
-        .archetype-section {
-            margin-bottom: 12pt;
-            page-break-inside: avoid;
-        }
-        .archetype-name {
             font-weight: bold;
-            font-size: 10pt;
-            background-color: #f0f0f0;
-            padding: 2pt 4pt;
-            margin-bottom: 3pt;
-        }
-        table {
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 4pt;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2pt;
+        }}
+        .date {{
+            font-size: {font_sizes['date']}pt;
+            color: #444;
+        }}
+        table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 8pt;
-            margin-bottom: 3pt;
-        }
-        th {
-            background-color: #ddd;
+            font-size: {font_sizes['body']}pt;
+            line-height: 1.1;
+        }}
+        thead {{
+            background-color: #e0e0e0;
             font-weight: bold;
+            font-size: {font_sizes['thead']}pt;
+        }}
+        th {{
+            border: 0.5pt solid #000;
+            padding: 1pt 2pt;
             text-align: left;
-            padding: 2pt 4pt;
-            border-bottom: 1px solid #999;
-        }
-        td {
-            padding: 2pt 4pt;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .maindeck-label {
+            font-weight: bold;
+        }}
+        td {{
+            border: 0.5pt solid #ccc;
+            padding: 1pt 2pt;
+            vertical-align: top;
+        }}
+        .archetype-col {{
+            width: 25%;
+            font-weight: bold;
+            word-wrap: break-word;
+        }}
+        .cards-col {{
+            width: 75%;
+            font-size: {font_sizes['cards']}pt;
+        }}
+        tbody tr:nth-child(odd) {{
+            background-color: #ffffff;
+        }}
+        tbody tr:nth-child(even) {{
+            background-color: #d0d0d0;
+        }}
+        .section-label {{
             font-weight: bold;
             color: #333;
-            font-size: 8pt;
-            margin-top: 2pt;
-            margin-bottom: 1pt;
-        }
-        .sideboard-label {
-            font-weight: bold;
-            color: #333;
-            font-size: 8pt;
-            margin-top: 2pt;
-            margin-bottom: 1pt;
-        }
-        .avg-col { width: 15%; text-align: center; }
-        .pct-col { width: 15%; text-align: center; }
+            font-size: {font_sizes['cards']}pt;
+        }}
+        .cards-text {{
+            color: #000;
+            font-size: {font_sizes['cards']}pt;
+            word-wrap: break-word;
+        }}
     </style>
 </head>
 <body>
-    <h1>Legacy Hate Cards Analysis</h1>
-    <div class="date">Generated: """ + date_str + """</div>
+    <div class="header">
+        <h1>Legacy Hate Cards Analysis</h1>
+        <div class="date">Generated: """ + date_str + """</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Archetype</th>
+                <th>Hate Cards (Maindeck | Sideboard)</th>
+            </tr>
+        </thead>
+        <tbody>
 """
     ]
     
-    for archetype in sorted(archetypes.keys()):
-        data = archetypes[archetype]
+    # Process each archetype (preserving order)
+    for arch_data in archetypes:
+        md_cards = sorted(arch_data["maindeck"], key=lambda c: c["pct"], reverse=True)
+        sb_cards = sorted(arch_data["sideboard"], key=lambda c: c["pct"], reverse=True)
         
-        html_parts.append(f'    <div class="archetype-section">')
-        html_parts.append(f'        <div class="archetype-name">{archetype}</div>')
+        md_text = format_card_list(md_cards, max_cards=3)
+        sb_text = format_card_list(sb_cards, max_cards=3)
         
-        # Maindeck table
-        if data["maindeck"]:
-            html_parts.append('        <div class="maindeck-label">Maindeck</div>')
-            html_parts.append('        <table>')
-            html_parts.append('            <tr><th>Card</th><th class="avg-col">Avg</th><th class="pct-col">% Decks</th></tr>')
-            for card in sorted(data["maindeck"], key=lambda c: c["pct"], reverse=True):
-                html_parts.append(
-                    f'            <tr><td>{card["name"]}</td>'
-                    f'<td class="avg-col">{card["avg"]:.1f}x</td>'
-                    f'<td class="pct-col">{card["pct"]}%</td></tr>'
-                )
-            html_parts.append('        </table>')
+        cards_html = ""
+        if md_text and sb_text:
+            cards_html = f'<span class="section-label">MD:</span> <span class="cards-text">{md_text}</span><br/><span class="section-label">SB:</span> <span class="cards-text">{sb_text}</span>'
+        elif md_text:
+            cards_html = f'<span class="section-label">MD:</span> <span class="cards-text">{md_text}</span>'
+        elif sb_text:
+            cards_html = f'<span class="section-label">SB:</span> <span class="cards-text">{sb_text}</span>'
+        else:
+            cards_html = '<span style="color: #ccc;">No hate cards</span>'
         
-        # Sideboard table
-        if data["sideboard"]:
-            html_parts.append('        <div class="sideboard-label">Sideboard</div>')
-            html_parts.append('        <table>')
-            html_parts.append('            <tr><th>Card</th><th class="avg-col">Avg</th><th class="pct-col">% Decks</th></tr>')
-            for card in sorted(data["sideboard"], key=lambda c: c["pct"], reverse=True):
-                html_parts.append(
-                    f'            <tr><td>{card["name"]}</td>'
-                    f'<td class="avg-col">{card["avg"]:.1f}x</td>'
-                    f'<td class="pct-col">{card["pct"]}%</td></tr>'
-                )
-            html_parts.append('        </table>')
-        
-        html_parts.append('    </div>')
+        html_parts.append(
+            f'            <tr>'
+            f'<td class="archetype-col">{arch_data["name"]}</td>'
+            f'<td class="cards-col">{cards_html}</td>'
+            f'</tr>'
+        )
     
-    html_parts.append('</body>\n</html>')
+    html_parts.append(
+        """        </tbody>
+    </table>
+</body>
+</html>"""
+    )
+    
     return "\n".join(html_parts)
 
 
@@ -218,15 +356,18 @@ def main():
         
         logger.info(f"Found {len(archetypes)} archetypes")
         
-        # Generate HTML
-        html_content = generate_html(archetypes, report_path)
+        # Find optimal font sizes
+        optimal_sizes = find_optimal_font_sizes(archetypes, report_path, logger)
+        
+        # Generate HTML with optimal sizes
+        html_content = generate_html(archetypes, report_path, optimal_sizes)
         
         # Save PDF
         timestamp = extract_timestamp(report_path)
         pdf_filename = f"hate_cards_{timestamp}.pdf" if timestamp else "hate_cards.pdf"
         pdf_path = PAPER_DIR / pdf_filename
         
-        HTML(string=html_content).write_pdf(pdf_path)
+        HTML(string=html_content).write_pdf(str(pdf_path))
         logger.info(f"PDF saved to: {pdf_path}")
         
     except Exception as e:

@@ -30,7 +30,7 @@ jobs:
       
       - name: Scrape MTGGoldfish Legacy meta
         run: |
-          uv run python scripts/scrape_legacy.py --limit 5
+          uv run python scripts/scrape_legacy.py --limit 30
       
       - name: Analyze hate cards
         run: |
