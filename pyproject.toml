@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtgscrap"
+version = "0.1.0"
+description = "MTG Legacy Meta Scraper for MTGGoldfish"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4",
+    "requests",
+    "lxml",
+    "contexttimer",
+    "weasyprint",
+]
