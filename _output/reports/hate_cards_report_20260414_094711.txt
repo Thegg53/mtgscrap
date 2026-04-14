@@ -1,0 +1,92 @@
+================================================================================
+LEGACY HATE CARDS ANALYSIS
+Source: legacy_decklists_20260414_094711.csv
+================================================================================
+
+
+DIMIR TEMPO
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Thoughtseize                             avg:  3.9x  |  100% of decks
+    • Daze                                     avg:  3.1x  |  100% of decks
+    • Force of Will                            avg:  4.0x  |  100% of decks
+    • Wasteland                                avg:  4.0x  |  100% of decks
+    • Orcish Bowmasters                        avg:  3.9x  |   98% of decks
+
+  SIDEBOARD:
+    • Force of Negation                        avg:  2.0x  |  100% of decks
+    • Consign to Memory                        avg:  2.6x  |   93% of decks
+    • Hydroblast                               avg:  1.8x  |   88% of decks
+    • Surgical Extraction                      avg:  1.7x  |   52% of decks
+    • Dauthi Voidwalker                        avg:  1.8x  |   39% of decks
+
+
+IZZET DELVER
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Daze                                     avg:  4.0x  |  100% of decks
+    • Force of Will                            avg:  4.0x  |  100% of decks
+    • Wasteland                                avg:  4.0x  |   99% of decks
+
+  SIDEBOARD:
+    • Pyroblast                                avg:  2.9x  |   95% of decks
+    • Consign to Memory                        avg:  2.0x  |   92% of decks
+    • Hydroblast                               avg:  1.9x  |   89% of decks
+    • Force of Negation                        avg:  1.8x  |   89% of decks
+    • Meltdown                                 avg:  1.2x  |   78% of decks
+    • Surgical Extraction                      avg:  1.5x  |   74% of decks
+    • Abrade                                   avg:  1.1x  |   54% of decks
+
+
+OCELOT PRIDE MIDRANGE
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |   99% of decks
+    • Cabal Therapy                            avg:  3.0x  |   63% of decks
+    • Thoughtseize                             avg:  3.3x  |   63% of decks
+    • Orcish Bowmasters                        avg:  3.2x  |   61% of decks
+
+  SIDEBOARD:
+    • Leyline of the Void                      avg:  3.9x  |   86% of decks
+    • Pyroblast                                avg:  1.6x  |   79% of decks
+    • Clarion Conqueror                        avg:  1.9x  |   65% of decks
+    • Red Elemental Blast                      avg:  1.2x  |   56% of decks
+    • Null Rod                                 avg:  1.9x  |   55% of decks
+    • Deafening Silence                        avg:  2.8x  |   51% of decks
+
+
+OOPS ALL SPELLS
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Cabal Therapy                            avg:  2.0x  |  100% of decks
+    • Pact of Negation                         avg:  4.0x  |   99% of decks
+    • Thoughtseize                             avg:  3.3x  |   54% of decks
+
+  SIDEBOARD:
+    • Force of Vigor                           avg:  4.0x  |   77% of decks
+    • Leyline of the Void                      avg:  3.9x  |   49% of decks
+
+
+SNEAK AND SHOW
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Force of Will                            avg:  4.0x  |  100% of decks
+    • Flusterstorm                             avg:  2.0x  |   74% of decks
+    • Daze                                     avg:  2.0x  |   35% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  1.9x  |   95% of decks
+    • Abrade                                   avg:  1.5x  |   88% of decks
+    • Pyroblast                                avg:  1.2x  |   82% of decks
+    • Disruptor Flute                          avg:  1.0x  |   73% of decks
+    • Mindbreak Trap                           avg:  1.2x  |   41% of decks
+    • Faerie Macabre                           avg:  1.1x  |   39% of decks
+    • Red Elemental Blast                      avg:  1.1x  |   37% of decks
+    • Leyline of the Void                      avg:  3.5x  |   35% of decks
+
+================================================================================
