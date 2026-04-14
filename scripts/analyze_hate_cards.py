@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Analyze hate card usage across Legacy archetypes.
-Parses the latest scrape CSV and filters for hate cards from input/hatecards.txt.
+Parses the latest scrape CSV and filters for hate cards from _input/hatecards.txt.
 """
 import csv
 import json
@@ -10,14 +10,14 @@ import re
 from pathlib import Path
 from collections import defaultdict
 
-OUTPUT_DIR = Path(__file__).parent.parent / "output"
+OUTPUT_DIR = Path(__file__).parent.parent / "_output"
 DECKS_DIR = OUTPUT_DIR / "decks"
 REPORTS_DIR = OUTPUT_DIR / "reports"
-INPUT_DIR = Path(__file__).parent.parent / "input"
+INPUT_DIR = Path(__file__).parent.parent / "_input"
 
 
 def load_hate_cards() -> set[str]:
-    """Load hate cards from input/hatecards.txt, ignoring comments."""
+    """Load hate cards from _input/hatecards.txt, ignoring comments."""
     hate_file = INPUT_DIR / "hatecards.txt"
     hate_cards = set()
     
@@ -40,7 +40,7 @@ def get_latest_csv() -> Path:
     csv_files = sorted(set(csv_files))
     
     if not csv_files:
-        raise FileNotFoundError("No CSV files found in output/ or output/decks/")
+        raise FileNotFoundError("No CSV files found in _output/ or _output/decks/")
     return csv_files[-1]
 
 

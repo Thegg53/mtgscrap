@@ -10,7 +10,7 @@ from pathlib import Path
 from mtgscrap.deck.goldfish import scrape_meta
 from mtgscrap.deck.export import export_decks_to_csv
 
-OUTPUT_DIR = Path(__file__).parent.parent / "output" / "decks"
+OUTPUT_DIR = Path(__file__).parent.parent / "_output" / "decks"
 
 
 def scrape_legacy_decklists(limit: int | None = None, debug: bool = False, throttle: bool = False) -> None:

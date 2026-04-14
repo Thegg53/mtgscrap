@@ -28,7 +28,7 @@ type PathLike = str | Path
 FILENAME_TIMESTAMP_FORMAT = "%Y%m%d_%H%M%S"
 READABLE_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 VAR_DIR = Path(os.getcwd()) / "var"
-OUTPUT_DIR = VAR_DIR / "output"
+OUTPUT_DIR = Path(os.getcwd()) / "_output"
 LOG_DIR = VAR_DIR / "logs" if (VAR_DIR / "logs").exists() else Path(os.getcwd())
 LOG_SIZE = 1024*1024*20  # 20MB
 

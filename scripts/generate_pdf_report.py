@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Generate a printer-friendly PDF from hate cards report.
-Reads the latest report from output/reports/ and creates a single-page PDF.
+Reads the latest report from _output/reports/ and creates a single-page PDF.
 """
 import logging
 import re
 from pathlib import Path
 from weasyprint import HTML, CSS
 
-OUTPUT_DIR = Path(__file__).parent.parent / "output"
+OUTPUT_DIR = Path(__file__).parent.parent / "_output"
 REPORTS_DIR = OUTPUT_DIR / "reports"
 PAPER_DIR = OUTPUT_DIR / "paper"
 
@@ -17,7 +17,7 @@ def get_latest_report() -> Path:
     """Get the latest text report from reports folder."""
     report_files = sorted(REPORTS_DIR.glob("hate_cards_report_*.txt"))
     if not report_files:
-        raise FileNotFoundError("No report files found in output/reports/")
+        raise FileNotFoundError("No report files found in _output/reports/")
     return report_files[-1]
 
 
