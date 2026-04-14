@@ -43,4 +43,4 @@ jobs:
           git checkout -B reports origin/reports 2>/dev/null || git checkout -b reports
           git add _output/decks/ _output/reports/ _output/paper/
           git commit -m "chore: weekly MTG scrape ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || echo "No changes to commit"
-          git push -u origin reports
+          git push --force-with-lease -u origin reports
