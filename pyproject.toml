@@ -8,9 +8,9 @@ version = "0.1.0"
 description = "MTG Legacy Meta Scraper for MTGGoldfish"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4",
-    "requests",
-    "lxml",
-    "contexttimer",
-    "weasyprint",
+    "beautifulsoup4~=4.12.3",
+    "requests~=2.31.0",
+    "lxml~=5.2.1",
+    "contexttimer~=0.3.3",
+    "weasyprint>=59",
 ]
