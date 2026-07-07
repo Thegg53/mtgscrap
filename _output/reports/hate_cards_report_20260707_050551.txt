@@ -1,0 +1,411 @@
+================================================================================
+LEGACY HATE CARDS ANALYSIS
+Source: legacy_decklists_20260707_050551.csv
+================================================================================
+
+
+IZZET DELVER
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |   98% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.2x  |   96% of decks
+    • Pyroblast                                avg:  2.7x  |   96% of decks
+    • Force of Negation                        avg:  1.8x  |   96% of decks
+    • Surgical Extraction                      avg:  1.6x  |   91% of decks
+    • Hydroblast                               avg:  1.8x  |   90% of decks
+    • Meltdown                                 avg:  1.1x  |   82% of decks
+
+
+DIMIR TEMPO
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |   95% of decks
+    • Orcish Bowmasters                        avg:  3.4x  |   91% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.5x  |   99% of decks
+    • Force of Negation                        avg:  1.7x  |   86% of decks
+    • Hydroblast                               avg:  2.1x  |   79% of decks
+    • Surgical Extraction                      avg:  1.3x  |   69% of decks
+    • Null Rod                                 avg:  1.2x  |   66% of decks
+
+
+SNEAK AND SHOW
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.5x  |   97% of decks
+    • Abrade                                   avg:  1.6x  |   77% of decks
+    • Pyroblast                                avg:  1.5x  |   57% of decks
+    • Disruptor Flute                          avg:  1.1x  |   57% of decks
+    • Red Elemental Blast                      avg:  1.2x  |   56% of decks
+
+
+DOOMSDAY
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Force of Negation                        avg:  2.0x  |   98% of decks
+    • Consign to Memory                        avg:  1.8x  |   90% of decks
+
+
+LANDS
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Pithing Needle                           avg:  1.0x  |  100% of decks
+    • Bojuka Bog                               avg:  1.0x  |  100% of decks
+    • Boseiju, Who Endures                     avg:  3.0x  |  100% of decks
+    • Ghost Quarter                            avg:  1.3x  |  100% of decks
+    • Wasteland                                avg:  4.0x  |  100% of decks
+    • Sphere of Resistance                     avg:  4.0x  |   58% of decks
+    • Disruptor Flute                          avg:  2.6x  |   47% of decks
+    • Soul-Guide Lantern                       avg:  1.0x  |   35% of decks
+
+  SIDEBOARD:
+    • Endurance                                avg:  2.4x  |   98% of decks
+    • Force of Vigor                           avg:  2.7x  |   98% of decks
+    • Disruptor Flute                          avg:  2.3x  |   90% of decks
+    • Pithing Needle                           avg:  1.0x  |   42% of decks
+
+
+THE EPIC STORM
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Thoughtseize                             avg:  3.6x  |  100% of decks
+    • Boseiju, Who Endures                     avg:  1.9x  |   40% of decks
+
+
+MARDU ENERGY
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Orcish Bowmasters                        avg:  3.4x  |  100% of decks
+    • Wasteland                                avg:  4.0x  |  100% of decks
+
+  SIDEBOARD:
+    • Null Rod                                 avg:  1.7x  |   79% of decks
+    • Clarion Conqueror                        avg:  1.8x  |   76% of decks
+    • Leyline of the Void                      avg:  4.0x  |   68% of decks
+    • Pyroblast                                avg:  1.6x  |   66% of decks
+    • Deafening Silence                        avg:  2.0x  |   58% of decks
+    • Red Elemental Blast                      avg:  1.2x  |   55% of decks
+    • Disruptor Flute                          avg:  1.5x  |   53% of decks
+
+
+ELDRAZI
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Chalice of the Void                      avg:  4.0x  |  100% of decks
+    • Petrified Hamlet                         avg:  3.9x  |   91% of decks
+
+  SIDEBOARD:
+    • Disruptor Flute                          avg:  3.5x  |   98% of decks
+    • Null Rod                                 avg:  2.5x  |   91% of decks
+    • Mindbreak Trap                           avg:  3.2x  |   65% of decks
+    • Faerie Macabre                           avg:  3.6x  |   46% of decks
+
+
+DEATH AND TAXES YORION MONO WHITE
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |  100% of decks
+    • Thalia, Guardian of Thraben              avg:  3.8x  |   97% of decks
+    • Disruptor Flute                          avg:  3.6x  |   72% of decks
+    • Ghost Quarter                            avg:  4.0x  |   72% of decks
+
+  SIDEBOARD:
+    • Wrath of the Skies                       avg:  3.1x  |   95% of decks
+    • Deafening Silence                        avg:  3.1x  |   92% of decks
+    • Mindbreak Trap                           avg:  1.5x  |   72% of decks
+    • Surgical Extraction                      avg:  2.0x  |   69% of decks
+    • Faerie Macabre                           avg:  1.2x  |   67% of decks
+    • Disruptor Flute                          avg:  2.5x  |   41% of decks
+
+
+BLUE ARTIFACTS
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.4x  |   77% of decks
+    • Pithing Needle                           avg:  1.0x  |   74% of decks
+    • Disruptor Flute                          avg:  1.9x  |   68% of decks
+    • Force of Negation                        avg:  2.0x  |   51% of decks
+    • Flusterstorm                             avg:  2.3x  |   47% of decks
+
+
+PAINTER
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Soul-Guide Lantern                       avg:  1.0x  |   69% of decks
+    • Pithing Needle                           avg:  1.0x  |   50% of decks
+    • Karn, the Great Creator                  avg:  2.2x  |   50% of decks
+
+  SIDEBOARD:
+    • Disruptor Flute                          avg:  1.8x  |   72% of decks
+    • Surgical Extraction                      avg:  1.8x  |   53% of decks
+    • Pithing Needle                           avg:  1.0x  |   50% of decks
+    • Consign to Memory                        avg:  1.9x  |   38% of decks
+    • Abrade                                   avg:  1.5x  |   34% of decks
+    • Faerie Macabre                           avg:  1.2x  |   34% of decks
+
+
+BOROS ENERGY
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |  100% of decks
+    • Thalia, Guardian of Thraben              avg:  2.7x  |   67% of decks
+
+  SIDEBOARD:
+    • Deafening Silence                        avg:  3.8x  |  100% of decks
+    • Pyroblast                                avg:  2.3x  |   95% of decks
+    • Surgical Extraction                      avg:  2.1x  |   69% of decks
+    • Abrade                                   avg:  1.9x  |   57% of decks
+    • Red Elemental Blast                      avg:  1.3x  |   55% of decks
+    • Null Rod                                 avg:  1.6x  |   36% of decks
+
+
+AZORIUS CONTROL
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Teferi, Time Raveler                     avg:  1.2x  |   96% of decks
+    • Wasteland                                avg:  4.0x  |   79% of decks
+    • The One Ring                             avg:  1.9x  |   62% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  3.5x  |  100% of decks
+    • Surgical Extraction                      avg:  1.1x  |  100% of decks
+    • Wrath of the Skies                       avg:  1.1x  |   67% of decks
+    • Flusterstorm                             avg:  1.8x  |   50% of decks
+    • Hydroblast                               avg:  1.9x  |   46% of decks
+    • Lavinia, Azorius Renegade                avg:  1.0x  |   42% of decks
+
+
+DEATH AND TAXES YORION BLACK WHITE
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  4.0x  |  100% of decks
+    • Orcish Bowmasters                        avg:  2.6x  |   53% of decks
+
+  SIDEBOARD:
+    • Wrath of the Skies                       avg:  2.8x  |  100% of decks
+    • Deafening Silence                        avg:  2.4x  |   94% of decks
+    • Faerie Macabre                           avg:  1.0x  |   94% of decks
+    • Disruptor Flute                          avg:  2.7x  |   88% of decks
+    • Surgical Extraction                      avg:  1.1x  |   82% of decks
+    • Mindbreak Trap                           avg:  1.7x  |   35% of decks
+
+
+OOPS ALL SPELLS
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Force of Vigor                           avg:  4.0x  |   87% of decks
+    • Thoughtseize                             avg:  3.0x  |   73% of decks
+    • Leyline of Sanctity                      avg:  4.0x  |   73% of decks
+
+
+LED DREDGE
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Leyline of the Void                      avg:  4.0x  |   92% of decks
+
+
+SAGA STORM
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Surgical Extraction                      avg:  2.1x  |   69% of decks
+    • Cabal Therapy                            avg:  1.0x  |   50% of decks
+
+
+CRADLE CONTROL
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Bojuka Bog                               avg:  1.0x  |  100% of decks
+    • Endurance                                avg:  1.8x  |   95% of decks
+    • Collector Ouphe                          avg:  1.0x  |   85% of decks
+    • Wasteland                                avg:  3.4x  |   80% of decks
+
+  SIDEBOARD:
+    • Force of Vigor                           avg:  2.4x  |   95% of decks
+    • Thoughtseize                             avg:  3.3x  |   85% of decks
+    • Endurance                                avg:  1.4x  |   60% of decks
+    • Mindbreak Trap                           avg:  2.4x  |   55% of decks
+    • Disruptor Flute                          avg:  2.0x  |   35% of decks
+
+
+AFFINITY STOMPY
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Pithing Needle                           avg:  1.0x  |   86% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  1.8x  |  100% of decks
+    • Force of Negation                        avg:  1.9x  |  100% of decks
+    • Disruptor Flute                          avg:  2.4x  |   95% of decks
+
+
+AZORIUS STONEBLADE
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  3.9x  |   91% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.6x  |  100% of decks
+    • Hydroblast                               avg:  1.6x  |   82% of decks
+    • Lavinia, Azorius Renegade                avg:  1.0x  |   82% of decks
+    • Wrath of the Skies                       avg:  1.6x  |   73% of decks
+    • Deafening Silence                        avg:  1.5x  |   55% of decks
+    • Surgical Extraction                      avg:  1.8x  |   45% of decks
+    • Rest in Peace                            avg:  1.6x  |   45% of decks
+    • Force of Negation                        avg:  1.2x  |   45% of decks
+
+
+JESKAI CONTROL
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Teferi, Time Raveler                     avg:  1.8x  |   73% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  3.1x  |  100% of decks
+    • Surgical Extraction                      avg:  1.7x  |  100% of decks
+    • Hydroblast                               avg:  1.5x  |   87% of decks
+    • Pyroblast                                avg:  2.2x  |   87% of decks
+    • Red Elemental Blast                      avg:  1.3x  |   80% of decks
+    • Blue Elemental Blast                     avg:  1.2x  |   67% of decks
+    • Lavinia, Azorius Renegade                avg:  1.0x  |   47% of decks
+
+
+OMNI TELL
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.5x  |   86% of decks
+    • Surgical Extraction                      avg:  1.2x  |   64% of decks
+    • Veil of Summer                           avg:  1.2x  |   64% of decks
+    • Flusterstorm                             avg:  1.6x  |   36% of decks
+    • Force of Negation                        avg:  1.6x  |   36% of decks
+
+
+NIC FIT
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Orcish Bowmasters                        avg:  3.4x  |   88% of decks
+    • Endurance                                avg:  1.6x  |   88% of decks
+    • Boseiju, Who Endures                     avg:  1.8x  |   62% of decks
+    • The One Ring                             avg:  4.0x  |   38% of decks
+
+  SIDEBOARD:
+    • Endurance                                avg:  1.6x  |   62% of decks
+    • Force of Vigor                           avg:  1.6x  |   62% of decks
+    • Thoughtseize                             avg:  2.5x  |   50% of decks
+    • Collector Ouphe                          avg:  1.0x  |   38% of decks
+    • Disruptor Flute                          avg:  2.7x  |   38% of decks
+    • Null Rod                                 avg:  2.3x  |   38% of decks
+
+
+DIMIR CONTROL
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Orcish Bowmasters                        avg:  4.0x  |  100% of decks
+    • Wasteland                                avg:  4.0x  |   56% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.6x  |  100% of decks
+    • Surgical Extraction                      avg:  1.1x  |   78% of decks
+    • Null Rod                                 avg:  1.5x  |   67% of decks
+    • Force of Negation                        avg:  1.8x  |   67% of decks
+    • Hydroblast                               avg:  2.3x  |   44% of decks
+    • Blue Elemental Blast                     avg:  1.7x  |   33% of decks
+    • Mindbreak Trap                           avg:  2.0x  |   33% of decks
+
+
+CEPHALID BREAKFAST
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.4x  |  100% of decks
+    • Force of Negation                        avg:  2.0x  |  100% of decks
+    • Pithing Needle                           avg:  1.0x  |   73% of decks
+    • Lavinia, Azorius Renegade                avg:  1.5x  |   73% of decks
+    • Soul-Guide Lantern                       avg:  1.7x  |   55% of decks
+
+
+BEANSTALK CONTROL NON YORION
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Orcish Bowmasters                        avg:  3.0x  |   50% of decks
+
+  SIDEBOARD:
+    • Wrath of the Skies                       avg:  2.0x  |  100% of decks
+    • Hydroblast                               avg:  1.5x  |   75% of decks
+    • Surgical Extraction                      avg:  1.3x  |   75% of decks
+    • Consign to Memory                        avg:  2.6x  |   62% of decks
+    • Pyroblast                                avg:  1.6x  |   62% of decks
+    • Force of Negation                        avg:  1.4x  |   62% of decks
+    • Lavinia, Azorius Renegade                avg:  1.5x  |   50% of decks
+    • Stony Silence                            avg:  1.0x  |   50% of decks
+    • Rest in Peace                            avg:  1.3x  |   38% of decks
+
+
+ALUREN
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Boseiju, Who Endures                     avg:  1.0x  |   81% of decks
+
+  SIDEBOARD:
+    • Consign to Memory                        avg:  2.1x  |   95% of decks
+    • Veil of Summer                           avg:  1.9x  |   81% of decks
+    • Force of Vigor                           avg:  2.1x  |   76% of decks
+    • Hydroblast                               avg:  1.3x  |   67% of decks
+    • Force of Negation                        avg:  1.2x  |   62% of decks
+
+
+JUND
+--------------------------------------------------------------------------------
+
+  MAINDECK:
+    • Wasteland                                avg:  3.3x  |  100% of decks
+    • Endurance                                avg:  1.9x  |   82% of decks
+    • Bojuka Bog                               avg:  1.0x  |   82% of decks
+    • Boseiju, Who Endures                     avg:  1.1x  |   73% of decks
+
+  SIDEBOARD:
+    • Force of Vigor                           avg:  3.5x  |   91% of decks
+    • Endurance                                avg:  1.1x  |   64% of decks
+    • Collector Ouphe                          avg:  1.8x  |   55% of decks
+    • Faerie Macabre                           avg:  1.0x  |   45% of decks
+    • Disruptor Flute                          avg:  2.3x  |   36% of decks
+
+
+ARCLIGHT PHOENIX
+--------------------------------------------------------------------------------
+
+  SIDEBOARD:
+    • Surgical Extraction                      avg:  2.4x  |   73% of decks
+    • Consign to Memory                        avg:  2.7x  |   64% of decks
+    • Force of Negation                        avg:  2.0x  |   64% of decks
+    • Pyroblast                                avg:  2.0x  |   45% of decks
+
+================================================================================
